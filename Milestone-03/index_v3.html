@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Northstar Research Desk | Request Tracker</title>
+  <!-- Bootstrap provides the responsive grid, navigation, and components. -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root { --navy: #102a43; --blue: #1f6feb; --mist: #f5f8fc; --gold: #f4b942; }
+    body { color: #243b53; background: var(--mist); font-family: Arial, sans-serif; }
+    .navbar { background: var(--navy); }
+    .navbar-brand { font-weight: 700; letter-spacing: .3px; }
+    .hero { background: linear-gradient(120deg, #102a43, #1a4d78); color: white; padding: 5.5rem 0; }
+    .hero .badge { background: rgba(244,185,66,.18); color: #ffda7b; border: 1px solid rgba(255,218,123,.45); }
+    .section-title { color: var(--navy); font-weight: 700; }
+    .card { border: 0; box-shadow: 0 5px 18px rgba(16,42,67,.08); }
+    .table-wrap { overflow-x: auto; }
+    .status { font-size: .78rem; font-weight: 700; padding: .35rem .65rem; border-radius: 50rem; white-space: nowrap; }
+    .pending { background: #fff3cd; color: #775a00; }
+    .progressing { background: #dbeafe; color: #174ea6; }
+    .complete { background: #d1fae5; color: #146c43; }
+    .basic-filter { background: #f8fafc; border: 1px dashed #b8c7d9; }
+    .sort-btn { border: 0; background: transparent; color: #243b53; font-weight: 700; padding: 0; }
+    .sort-btn:hover { color: var(--blue); }
+    /* Calendar feature: visual due-date planning for the research queue. */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(90px, 1fr)); min-width: 670px; }
+    .calendar-day, .calendar-weekday { border-right: 1px solid #e5eaf0; border-bottom: 1px solid #e5eaf0; padding: .5rem; }
+    .calendar-weekday { background: #f8fafc; font-size: .75rem; font-weight: 700; text-align: center; color: #52677d; }
+    .calendar-day { min-height: 112px; background: white; }
+    .calendar-day.muted { background: #f8fafc; }
+    .day-number { font-weight: 700; font-size: .85rem; }
+    .calendar-event { display: block; width: 100%; margin-top: .35rem; padding: .25rem .35rem; border: 0; border-left: 3px solid var(--blue); border-radius: .2rem; background: #eaf2ff; color: #174ea6; font-size: .7rem; line-height: 1.15; text-align: left; }
+    .calendar-event:hover { background: #dbeafe; }
+    /* Version 3 dashboard: a quick workload view plus focused project-work previews. */
+    .metric-card { border-left: 4px solid var(--blue); }
+    .metric-number { color: var(--navy); font-size: 1.8rem; font-weight: 700; }
+    .request-card { border: 1px solid #e5eaf0; box-shadow: none; transition: transform .15s, box-shadow .15s; }
+    .request-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16,42,67,.10); }
+    .progress { height: .55rem; }
+    footer { background: var(--navy); color: #cbd5e1; }
+    footer a { color: white; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="#home">Northstar Research Desk</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link active" href="#home">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero: introduces the organization and current process. -->
+  <header class="hero" id="home">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <span class="badge rounded-pill mb-3">Current Process • Basic Version</span>
+          <h1 class="display-5 fw-bold">Investment research requests, all in one place.</h1>
+          <p class="lead mb-4">Northstar Research Desk records requests from portfolio teams so financial analysts can see what research is needed, who owns it, and what is due next.</p>
+          <a href="#updates" class="btn btn-warning btn-lg fw-semibold">View current requests</a>
+        </div>
+        <div class="col-lg-4">
+          <div class="bg-white bg-opacity-10 rounded-4 p-4 border border-light border-opacity-25">
+            <div class="fs-2 fw-bold">18</div><div class="small text-white-50">Open research requests</div>
+            <hr class="border-light opacity-25">
+            <div class="fs-2 fw-bold">4</div><div class="small text-white-50">Due this week</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- New Version 3 Feature: dashboard presents every request and its current work progress. -->
+  <section class="py-5" id="dashboard">
+    <div class="container">
+      <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3"><div><h2 class="section-title mb-1">Research Operations Dashboard</h2><p class="text-secondary mb-0">One view of every request, its progress, and the next work step.</p></div><button class="btn btn-outline-primary" id="showAllProjects">Show all requests</button></div>
+      <div class="row g-3 mb-4"><div class="col-md-4"><div class="card metric-card p-3 h-100"><div class="small text-secondary">Open requests</div><div class="metric-number" id="openCount">3</div></div></div><div class="col-md-4"><div class="card metric-card p-3 h-100"><div class="small text-secondary">Due this week</div><div class="metric-number" id="dueWeekCount">1</div></div></div><div class="col-md-4"><div class="card metric-card p-3 h-100"><div class="small text-secondary">Average work complete</div><div class="metric-number" id="averageProgress">0%</div></div></div></div>
+      <div class="row g-3" id="projectDashboard"></div>
+    </div>
+  </section>
+
+  <!-- About the Process -->
+  <section class="py-5" id="about">
+    <div class="container">
+      <div class="row g-4 align-items-center">
+        <div class="col-lg-5"><h2 class="section-title">About the Process</h2><p class="mb-0">Portfolio managers and associates submit requests for company, industry, market, or risk research. Financial analysts use this tracker to document the request, assign responsibility, and communicate a basic status update.</p></div>
+        <div class="col-lg-7"><div class="row g-3">
+          <div class="col-md-4"><div class="card h-100 p-3"><strong>Request</strong><small class="text-secondary mt-2">Log a question from an investment team.</small></div></div>
+          <div class="col-md-4"><div class="card h-100 p-3"><strong>Review</strong><small class="text-secondary mt-2">Assign an analyst and target date.</small></div></div>
+          <div class="col-md-4"><div class="card h-100 p-3"><strong>Deliver</strong><small class="text-secondary mt-2">Share findings and close the request.</small></div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- New Feature: Calendar provides a date-based view of every research deadline. -->
+  <section class="pb-5" id="calendar">
+    <div class="container">
+      <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3"><div><h2 class="section-title mb-1">Research Due-Date Calendar</h2><p class="text-secondary mb-0">See due dates together, then select a request to review its owner and status.</p></div><div class="btn-group"><button class="btn btn-outline-primary" id="previousMonth" aria-label="Previous month">←</button><button class="btn btn-outline-primary" id="nextMonth" aria-label="Next month">→</button></div></div>
+      <div class="card overflow-hidden"><div class="card-header bg-white border-0 pt-3 px-3"><h3 class="h5 mb-0" id="calendarTitle">November 2026</h3></div><div class="table-wrap"><div class="calendar-grid" id="calendarGrid"></div></div><div class="card-footer bg-white border-0 text-secondary small" id="calendarMessage">Select a deadline to see its request details.</div></div>
+    </div>
+  </section>
+
+  <!-- Current Information: intentionally simple, reflecting an early hard-to-sort database. -->
+  <section class="pb-5" id="updates">
+    <div class="container">
+      <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3"><div><h2 class="section-title mb-1">Current Information</h2><p class="text-secondary mb-0">Latest research requests entered into the tracker.</p></div><button class="btn btn-outline-primary" id="refreshBtn">Refresh list</button></div>
+      <div class="basic-filter rounded-3 p-3 mb-3">
+        <div class="row g-2"><div class="col-lg-4"><label class="form-label small fw-semibold mb-1" for="keyword">Keyword search</label><input id="keyword" class="form-control" placeholder="Company, topic, or analyst..."></div>
+          <div class="col-sm-6 col-lg-2"><label class="form-label small fw-semibold mb-1" for="dueFilter">Due date</label><select id="dueFilter" class="form-select"><option value="all">All dates</option><option value="overdue">Overdue</option><option value="week">Due this week</option><option value="later">Due later</option></select></div>
+          <div class="col-sm-6 col-lg-2"><label class="form-label small fw-semibold mb-1" for="stateFilter">State</label><select id="stateFilter" class="form-select"><option value="all">All states</option><option>In progress</option><option>Awaiting data</option><option>Delivered</option></select></div>
+          <div class="col-sm-6 col-lg-2"><label class="form-label small fw-semibold mb-1" for="coverageFilter">Coverage area</label><select id="coverageFilter" class="form-select"><option value="all">All areas</option><option>Technology</option><option>Fixed Income</option><option>Financials</option><option>Consumer</option></select></div>
+          <div class="col-sm-6 col-lg-2"><label class="form-label small fw-semibold mb-1" for="analystFilter">Assigned analyst</label><select id="analystFilter" class="form-select"><option value="all">All analysts</option><option>Jordan Lee</option><option>Priya Shah</option><option>Marcus Chen</option><option>Avery Miller</option></select></div>
+        </div>
+      </div>
+      <div class="card table-wrap"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Request</th><th><button class="sort-btn" data-sort="coverage">Coverage Area ↕</button></th><th><button class="sort-btn" data-sort="analyst">Assigned Analyst ↕</button></th><th><button class="sort-btn" data-sort="date">Due Date ↕</button></th><th><button class="sort-btn" data-sort="state">State ↕</button></th></tr></thead><tbody id="requestRows">
+        <tr data-date="2026-11-07" data-state="In progress" data-coverage="Technology" data-analyst="Jordan Lee"><td><strong>NVDA earnings sensitivity</strong><br><small class="text-secondary">Valuation impact from data-center guidance</small></td><td>Technology</td><td>Jordan Lee</td><td>Nov. 7</td><td><span class="status progressing">In progress</span></td></tr>
+        <tr data-date="2026-11-04" data-state="Awaiting data" data-coverage="Fixed Income" data-analyst="Priya Shah"><td><strong>Municipal bond credit review</strong><br><small class="text-secondary">Compare Utah issuers for income portfolio</small></td><td>Fixed Income</td><td>Priya Shah</td><td>Nov. 4</td><td><span class="status pending">Awaiting data</span></td></tr>
+        <tr data-date="2026-11-10" data-state="In progress" data-coverage="Financials" data-analyst="Marcus Chen"><td><strong>Regional bank exposure</strong><br><small class="text-secondary">Review CRE concentration and liquidity risk</small></td><td>Financials</td><td>Marcus Chen</td><td>Nov. 10</td><td><span class="status progressing">In progress</span></td></tr>
+        <tr data-date="2026-10-31" data-state="Delivered" data-coverage="Consumer" data-analyst="Avery Miller"><td><strong>Consumer staples outlook</strong><br><small class="text-secondary">Inflation and margin trends for Q4</small></td><td>Consumer</td><td>Avery Miller</td><td>Oct. 31</td><td><span class="status complete">Delivered</span></td></tr>
+      </tbody></table></div>
+      <p id="resultMessage" class="small text-secondary mt-3 mb-0">Showing 4 recent requests.</p>
+    </div>
+  </section>
+
+  <!-- Footer / Contact -->
+  <footer class="py-4" id="contact"><div class="container d-md-flex justify-content-between align-items-center gap-3"><div><strong>Northstar Research Desk</strong><br><small>Investment Research Operations</small></div><div class="mt-3 mt-md-0"><a href="mailto:research@northstar.example">research@northstar.example</a><span class="mx-2 text-secondary">|</span><a href="#home">LinkedIn</a></div></div></footer>
+
+  <!-- Project-work preview modal; populated by client-side JavaScript. -->
+  <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalTitle" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><div><h2 class="modal-title fs-5" id="projectModalTitle">Request details</h2><p class="small text-secondary mb-0" id="projectModalMeta"></p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body" id="projectModalBody"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Client-side filters and column sorting make the request list easier to use.
+    const keyword = document.getElementById('keyword');
+    const dueFilter = document.getElementById('dueFilter');
+    const stateFilter = document.getElementById('stateFilter');
+    const coverageFilter = document.getElementById('coverageFilter');
+    const analystFilter = document.getElementById('analystFilter');
+    const requestRows = document.getElementById('requestRows');
+    const rows = [...requestRows.querySelectorAll('tr')];
+    const message = document.getElementById('resultMessage');
+    function applyFilters() {
+      const term = keyword.value.toLowerCase().trim();
+      let count = 0;
+      const today = new Date('2026-10-30T00:00:00');
+      const weekEnd = new Date('2026-11-05T23:59:59');
+      rows.forEach(row => {
+        const date = new Date(`${row.dataset.date}T00:00:00`);
+        const dueMatch = dueFilter.value === 'all' || (dueFilter.value === 'overdue' && date < today) || (dueFilter.value === 'week' && date >= today && date <= weekEnd) || (dueFilter.value === 'later' && date > weekEnd);
+        const match = row.textContent.toLowerCase().includes(term) && dueMatch && (stateFilter.value === 'all' || row.dataset.state === stateFilter.value) && (coverageFilter.value === 'all' || row.dataset.coverage === coverageFilter.value) && (analystFilter.value === 'all' || row.dataset.analyst === analystFilter.value);
+        row.style.display = match ? '' : 'none'; if (match) count++;
+      });
+      message.textContent = `Showing ${count} request${count === 1 ? '' : 's'}${term ? ` matching “${keyword.value}”` : ''}.`;
+    }
+    [keyword, dueFilter, stateFilter, coverageFilter, analystFilter].forEach(control => control.addEventListener(control === keyword ? 'input' : 'change', applyFilters));
+    let lastSort = { key: '', direction: 1 };
+    document.querySelectorAll('[data-sort]').forEach(button => button.addEventListener('click', () => {
+      const key = button.dataset.sort;
+      const direction = lastSort.key === key ? -lastSort.direction : 1;
+      rows.sort((a, b) => (a.dataset[key] || '').localeCompare(b.dataset[key] || '', undefined, {numeric: true}) * direction);
+      rows.forEach(row => requestRows.appendChild(row));
+      lastSort = { key, direction };
+    }));
+
+    // New Feature: renders a client-side calendar from the same request data used by the tracker.
+    // This prevents analysts from having to scan a table to identify upcoming deadlines.
+    const calendarGrid = document.getElementById('calendarGrid');
+    const calendarTitle = document.getElementById('calendarTitle');
+    const calendarMessage = document.getElementById('calendarMessage');
+    const requestData = rows.map(row => ({
+      title: row.querySelector('strong').textContent,
+      date: row.dataset.date,
+      analyst: row.dataset.analyst,
+      state: row.dataset.state
+    }));
+    let calendarMonth = new Date(2026, 10, 1);
+    function renderCalendar() {
+      const year = calendarMonth.getFullYear();
+      const month = calendarMonth.getMonth();
+      calendarTitle.textContent = calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      let html = weekdays.map(day => `<div class="calendar-weekday">${day}</div>`).join('');
+      for (let blank = 0; blank < firstDay; blank++) html += '<div class="calendar-day muted"></div>';
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isoDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const events = requestData.filter(request => request.date === isoDate);
+        html += `<div class="calendar-day"><div class="day-number">${day}</div>${events.map(request => `<button class="calendar-event" data-calendar-date="${request.date}" title="${request.title}">${request.title}</button>`).join('')}</div>`;
+      }
+      calendarGrid.innerHTML = html;
+      document.querySelectorAll('.calendar-event').forEach(event => event.addEventListener('click', () => {
+        const request = requestData.find(item => item.date === event.dataset.calendarDate && item.title === event.textContent);
+        calendarMessage.textContent = `${request.title} — due ${new Date(`${request.date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}; assigned to ${request.analyst}; ${request.state}.`;
+      }));
+    }
+    document.getElementById('previousMonth').addEventListener('click', () => { calendarMonth.setMonth(calendarMonth.getMonth() - 1); renderCalendar(); });
+    document.getElementById('nextMonth').addEventListener('click', () => { calendarMonth.setMonth(calendarMonth.getMonth() + 1); renderCalendar(); });
+    renderCalendar();
+
+    // Version 3 Feature: all-request dashboard and interactive work-preview panels.
+    // Checking a completed work item instantly updates progress, helping analysts prioritize follow-up work.
+    const projects = [
+      { title: 'NVDA earnings sensitivity', analyst: 'Jordan Lee', state: 'In progress', due: 'Nov. 7', next: 'Update valuation model after guidance call', tasks: [{text:'Review consensus estimates',done:true},{text:'Run valuation sensitivity',done:true},{text:'Draft portfolio-team summary',done:false}] },
+      { title: 'Municipal bond credit review', analyst: 'Priya Shah', state: 'Awaiting data', due: 'Nov. 4', next: 'Obtain issuer financial statements', tasks: [{text:'Confirm requested issuers',done:true},{text:'Collect financial statements',done:false},{text:'Complete credit comparison',done:false}] },
+      { title: 'Regional bank exposure', analyst: 'Marcus Chen', state: 'In progress', due: 'Nov. 10', next: 'Review updated CRE exposure schedules', tasks: [{text:'Review liquidity metrics',done:true},{text:'Analyze CRE concentrations',done:false},{text:'Prepare risk recommendation',done:false}] },
+      { title: 'Consumer staples outlook', analyst: 'Avery Miller', state: 'Delivered', due: 'Oct. 31', next: 'Archive delivered research note', tasks: [{text:'Compile Q4 outlook inputs',done:true},{text:'Review margin trends',done:true},{text:'Deliver research note',done:true}] }
+    ];
+    const dashboard = document.getElementById('projectDashboard');
+    const percent = project => Math.round(project.tasks.filter(task => task.done).length / project.tasks.length * 100);
+    function renderDashboard() {
+      dashboard.innerHTML = projects.map((project, index) => `<div class="col-md-6 col-xl-3"><article class="card request-card h-100 p-3"><div class="d-flex justify-content-between gap-2"><span class="status ${project.state === 'Delivered' ? 'complete' : project.state === 'Awaiting data' ? 'pending' : 'progressing'}">${project.state}</span><small class="text-secondary">Due ${project.due}</small></div><h3 class="h6 mt-3 mb-2">${project.title}</h3><p class="small text-secondary mb-3">Owner: ${project.analyst}</p><div class="d-flex justify-content-between small mb-1"><span>Work complete</span><strong>${percent(project)}%</strong></div><div class="progress mb-3"><div class="progress-bar" role="progressbar" style="width: ${percent(project)}%" aria-valuenow="${percent(project)}" aria-valuemin="0" aria-valuemax="100"></div></div><p class="small mb-3"><strong>Next:</strong> ${project.next}</p><button class="btn btn-sm btn-primary mt-auto project-button" data-project="${index}">Preview work</button></article></div>`).join('');
+      const openProjects = projects.filter(project => project.state !== 'Delivered');
+      document.getElementById('openCount').textContent = openProjects.length;
+      document.getElementById('dueWeekCount').textContent = projects.filter(project => project.due === 'Nov. 4').length;
+      document.getElementById('averageProgress').textContent = `${Math.round(projects.reduce((sum, project) => sum + percent(project), 0) / projects.length)}%`;
+      document.querySelectorAll('.project-button').forEach(button => button.addEventListener('click', () => showProject(Number(button.dataset.project))));
+    }
+    const projectModal = new bootstrap.Modal(document.getElementById('projectModal'));
+    function showProject(index) {
+      const project = projects[index];
+      document.getElementById('projectModalTitle').textContent = project.title;
+      document.getElementById('projectModalMeta').textContent = `${project.analyst} • Due ${project.due} • ${project.state}`;
+      document.getElementById('projectModalBody').innerHTML = `<div class="d-flex justify-content-between align-items-center mb-2"><strong>Project progress</strong><span>${percent(project)}%</span></div><div class="progress mb-4"><div class="progress-bar" style="width: ${percent(project)}%"></div></div><h3 class="h6">Work checklist</h3><p class="small text-secondary">Update completed items as the research work moves forward.</p>${project.tasks.map((task, taskIndex) => `<div class="form-check border rounded p-3 mb-2"><input class="form-check-input ms-0 work-task" type="checkbox" id="task-${index}-${taskIndex}" data-project="${index}" data-task="${taskIndex}" ${task.done ? 'checked' : ''}><label class="form-check-label ms-2" for="task-${index}-${taskIndex}">${task.text}</label></div>`).join('')}<div class="alert alert-light border mt-4 mb-0"><strong>Next action:</strong> ${project.next}</div>`;
+      document.querySelectorAll('.work-task').forEach(input => input.addEventListener('change', () => { projects[Number(input.dataset.project)].tasks[Number(input.dataset.task)].done = input.checked; renderDashboard(); showProject(index); }));
+      projectModal.show();
+    }
+    document.getElementById('showAllProjects').addEventListener('click', () => { dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    renderDashboard();
+    // Gives the basic tracker a visible refresh response without a server connection.
+    document.getElementById('refreshBtn').addEventListener('click', () => { message.textContent = `List refreshed at ${new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}.`; });
+  </script>
+</body>
+</html>
